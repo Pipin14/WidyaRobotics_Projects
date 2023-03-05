@@ -1,0 +1,6 @@
+services:
+  fastapi:
+    container_name: myContainer
+    image: fastapi
+    ports:
+      - "80:80"
