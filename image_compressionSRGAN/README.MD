@@ -1,1 +1,12 @@
 Image Compression SRGAN
+
+I use a different hyperparameters:
+
+LEARNING_RATE = 1e-4
+NUM_EPOCHS = 100
+BATCH_SIZE = 16
+NUM_WORKERS = 4
+HIGH_RES = 96
+RATIO = 4
+LOW_RES = HIGH_RES // RATIO
+IMG_CHANNELS = 3
