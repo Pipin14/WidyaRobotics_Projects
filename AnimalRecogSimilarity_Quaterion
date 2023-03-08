@@ -1,7 +1,0 @@
-train(lr=LEARNING_RATE, 
-      mining="hard", 
-      batch_size=TRAIN_BATCH_SIZE, 
-      epochs=NUM_EPOCHS, 
-      input_size=IMAGE_SIZE, 
-      shuffle=True, save_dir="animals_recognition"
-      )
