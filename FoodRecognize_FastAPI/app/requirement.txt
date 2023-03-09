@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+python-multipart
+torch
+torchvision
+Pillow
+json
+os
+quaterion
+numpy
