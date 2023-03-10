@@ -1,0 +1,6 @@
+services:
+  food-recognize:
+    container_name: food-recognize
+    image: food-recognize:1.0 
+    ports:
+      - "8000:8000"
