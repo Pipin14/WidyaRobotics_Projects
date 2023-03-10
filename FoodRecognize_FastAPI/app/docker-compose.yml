@@ -1,6 +1,0 @@
-services:
-  Food-recognize:
-    container_name: VectorEmbedding
-    image: food-recognize 
-    ports:
-      - "8000:8000"
