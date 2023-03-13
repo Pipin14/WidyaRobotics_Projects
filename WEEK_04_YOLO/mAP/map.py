@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def calculate_iou(bbox1:np.array, bbox2:np.array):
     x1, y1, w1, h1 = bbox1
     x2, y2, w2, h2 = bbox2
@@ -29,27 +30,29 @@ def calculate_ap(precision, recall):
     ap = np.sum((recall[indices] - recall[indices - 1]) * precision[indices])
     return ap
 
-def calculate_map(gt_boxes, pred_boxes, iou_threshold=np.linspace(0.5, 0.95, 1)):
+def calculate_map(gt_boxes, pred_boxes, iou_threshold=np.linspace(0.4, 0.95, 1)):
     """Calculates mean Average Precision (mAP) given ground truth and predicted boxes."""
     num_classes = max(gt_boxes[:, 4].max(), pred_boxes[:, 4].max()) + 1
+    average_predictions = np.zeros(num_classes)
     aps = []
 
     for class_id in range(num_classes):
-        gt_class_boxes = gt_boxes[gt_boxes[:, 4] == class_id][:, :4]
-        pred_class_boxes = pred_boxes[pred_boxes[:, 4] == class_id][:, :4]
+        gt_class_boxes = gt_boxes[gt_boxes[:, class_id+4] == class_id][:, :4]
+        pred_class_boxes = pred_boxes[pred_boxes[:, class_id+4] == class_id][:, :4]
 
         num_gt_boxes = len(gt_class_boxes)
         num_pred_boxes = len(pred_class_boxes)
         
-        # If there is no object prediction, then average precision = 0
+        # If there is no ground truth object and predictions objects, then average precision = 0
         if num_gt_boxes == 0 or num_pred_boxes == 0:
+            average_predictions[class_id] = 0
             continue
-
+        
         iou = np.zeros((num_pred_boxes, num_gt_boxes))
 
         for i, pred_box in enumerate(pred_class_boxes):
             for j, gt_box in enumerate(gt_class_boxes):
-                iou[i, j] = calculate_iou(pred_box, gt_box)
+                iou[i, j] = calculate_iou(pred_box[:4], gt_box)
                 
         # Sort the predictions based on the highest confidence score
         sorted_indices = np.argsort(-pred_class_boxes[:, 4])
@@ -76,8 +79,9 @@ def calculate_map(gt_boxes, pred_boxes, iou_threshold=np.linspace(0.5, 0.95, 1))
         recall = tp / num_gt_boxes
         precision = tp / (tp + fp + 1e-8)
 
-        ap = calculate_ap(precision, recall)
-        aps.append(ap)
-
+        average_predictions = calculate_ap(precision, recall)
+        aps.append(average_predictions)
+    
+    # Compute mAP over all classes
     mAP = np.mean(aps)
     return mAP
