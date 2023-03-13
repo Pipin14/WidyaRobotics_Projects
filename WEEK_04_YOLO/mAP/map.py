@@ -30,58 +30,77 @@ def calculate_ap(precision, recall):
     ap = np.sum((recall[indices] - recall[indices - 1]) * precision[indices])
     return ap
 
-def calculate_map(gt_boxes, pred_boxes, iou_threshold=np.linspace(0.4, 0.95, 1)):
-    """Calculates mean Average Precision (mAP) given ground truth and predicted boxes."""
-    num_classes = gt_boxes.shape[1] - 4
-    average_predictions = np.zeros(num_classes)
-    aps = []
-
-    for class_id in range(num_classes):
-        gt_class_boxes = gt_boxes[gt_boxes[:, class_id+4] == 1]
-        pred_class_boxes = pred_boxes[pred_boxes[:, class_id+4] == 1]
-
-        num_gt_boxes = len(gt_class_boxes)
-        num_pred_boxes = len(pred_class_boxes)
+def calculate_map(y_true, y_pred, iou_threshold = np.linspace(0.5, 0.95, 1)):
+    n_classes = y_true.shape[1] - 4
+    ap_list = np.zeros(n_classes)
+    
+    for c in range(n_classes):
+        pred_class_boxes = y_pred[y_true[:, c+4] == 1]
+        y_true_c = y_true[y_true[:, c+4] == 1]
         
-        # If there is no ground truth object and predictions objects, then average precision = 0
-        if num_gt_boxes == 0 or num_pred_boxes == 0:
-            average_predictions[class_id] = 0
+        n_grond_truths = len(y_true_c)
+        n_predictions = len(pred_class_boxes)
+        
+        if n_grond_truths == 0:
             continue
         
-        iou = np.zeros((num_pred_boxes, num_gt_boxes))
-
-        for i, pred_box in enumerate(pred_class_boxes):
-            for j, gt_box in enumerate(gt_class_boxes):
-                iou[i, j] = calculate_iou(pred_box[:4], gt_box)
+        if n_predictions == 0:
+            ap_list[c] = 0
+            continue
+        pred_class_boxes = pred_class_boxes[np.argsort(pred_class_boxes[:, 0])[::-1]]
+            
+        tp = fp = np.zeros(n_predictions)
+            
+        for i in range(n_predictions):
+            box_pred = pred_class_boxes[i, 1:5]
+            iou_max = -1
+            ground_truth_match = -1
+            
+        for j in range(n_grond_truths):
+            if y_true_c[j, 0] != c:
+                continue
+            
+            box_true = y_true_c[j, 1:5]
+            iou = calculate_iou(box_pred, box_true)
                 
-        # Sort the predictions based on the highest confidence score
-        sorted_indices = np.argsort(-pred_class_boxes[:, 4])
-        pred_class_boxes = pred_class_boxes[sorted_indices]
-        
-        # Initiate true positive array and false positive array 
-        tp = np.zeros(num_pred_boxes)
-        fp = np.zeros(num_pred_boxes)
-        
-        # Check eaach objects predictions
-        for i in range(num_pred_boxes):
-            gt_indices = np.where(iou[i] >= iou_threshold)[0]
-            if len(gt_indices) == 0:
-                fp[i] = 1
-            else:
-                max_iou_index = np.argmax(iou[i])
-                if tp[max_iou_index] == 0:
-                    tp[max_iou_index] = 1
+            if iou > iou_max:
+                iou_max = iou
+                ground_truth_match = j
+                
+            if iou_max > iou_threshold:
+                if y_true_c[ground_truth_match, 2] == 0:
+                    tp[i] = 1
+                    y_true_c[ground_truth_match, 2] = i
                 else:
                     fp[i] = 1
+            else:
+                fp[i] = 1
                     
         tp = np.cumsum(tp)
         fp = np.cumsum(fp)
-        recall = tp / num_gt_boxes
+        recall = tp / n_grond_truths
         precision = tp / (tp + fp + 1e-8)
 
         average_predictions = calculate_ap(precision, recall)
-        aps.append(average_predictions)
     
     # Compute mAP over all classes
-    mAP = np.mean(aps)
+    mAP = np.mean(average_predictions)
     return mAP
+
+def test():
+    
+  gt_class_boxes = np.array([
+    [0, 10, 10, 20, 20, 1, 0],
+    [0, 30, 30, 40, 40, 1, 0],
+  ])
+  
+  pred_class_boxes = np.array([
+    [0.9, 10, 10, 20, 20],
+    [0.8, 35, 35, 45, 45],
+  ])
+  
+  map_list = calculate_map(gt_class_boxes, pred_class_boxes)
+  print(map_list)
+  
+if __name__ == '__main__':
+  test()
