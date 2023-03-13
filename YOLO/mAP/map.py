@@ -81,10 +81,10 @@ def calculate_map(y_true, y_pred, iou_threshold = np.linspace(0.5, 0.95, 1)):
         recall = tp / n_grond_truths
         precision = tp / (tp + fp + 1e-8)
 
-        average_predictions = calculate_ap(precision, recall)
+        aps = calculate_ap(precision, recall)
     
     # Compute mAP over all classes
-    mAP = np.mean(average_predictions)
+    mAP = np.mean(aps)
     return mAP
 
 def test():
