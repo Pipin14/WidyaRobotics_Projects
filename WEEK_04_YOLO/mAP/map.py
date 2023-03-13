@@ -29,10 +29,8 @@ def calculate_ap(precision, recall):
     ap = np.sum((recall[indices] - recall[indices - 1]) * precision[indices])
     return ap
 
-def calculate_map(gt_boxes, pred_boxes, iou_threshold=0.5):
-    """
-    Calculates mean Average Precision (mAP) given ground truth and predicted boxes.
-    """
+def calculate_map(gt_boxes, pred_boxes, iou_threshold=np.linspace(0.5, 0.95, 1)):
+    """Calculates mean Average Precision (mAP) given ground truth and predicted boxes."""
     num_classes = max(gt_boxes[:, 4].max(), pred_boxes[:, 4].max()) + 1
     aps = []
 
@@ -42,7 +40,8 @@ def calculate_map(gt_boxes, pred_boxes, iou_threshold=0.5):
 
         num_gt_boxes = len(gt_class_boxes)
         num_pred_boxes = len(pred_class_boxes)
-
+        
+        # If there is no object prediction, then average precision = 0
         if num_gt_boxes == 0 or num_pred_boxes == 0:
             continue
 
@@ -51,13 +50,16 @@ def calculate_map(gt_boxes, pred_boxes, iou_threshold=0.5):
         for i, pred_box in enumerate(pred_class_boxes):
             for j, gt_box in enumerate(gt_class_boxes):
                 iou[i, j] = calculate_iou(pred_box, gt_box)
-
+                
+        # Sort the predictions based on the highest confidence score
         sorted_indices = np.argsort(-pred_class_boxes[:, 4])
         pred_class_boxes = pred_class_boxes[sorted_indices]
-
+        
+        # Initiate true positive array and false positive array 
         tp = np.zeros(num_pred_boxes)
         fp = np.zeros(num_pred_boxes)
-
+        
+        # Check eaach objects predictions
         for i in range(num_pred_boxes):
             gt_indices = np.where(iou[i] >= iou_threshold)[0]
             if len(gt_indices) == 0:
