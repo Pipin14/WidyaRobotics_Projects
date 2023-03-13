@@ -32,13 +32,13 @@ def calculate_ap(precision, recall):
 
 def calculate_map(gt_boxes, pred_boxes, iou_threshold=np.linspace(0.4, 0.95, 1)):
     """Calculates mean Average Precision (mAP) given ground truth and predicted boxes."""
-    num_classes = max(gt_boxes[:, 4].max(), pred_boxes[:, 4].max()) + 1
+    num_classes = gt_boxes.shape[1] - 4
     average_predictions = np.zeros(num_classes)
     aps = []
 
     for class_id in range(num_classes):
-        gt_class_boxes = gt_boxes[gt_boxes[:, class_id+4] == class_id][:, :4]
-        pred_class_boxes = pred_boxes[pred_boxes[:, class_id+4] == class_id][:, :4]
+        gt_class_boxes = gt_boxes[gt_boxes[:, class_id+4] == 1]
+        pred_class_boxes = pred_boxes[pred_boxes[:, class_id+4] == 1]
 
         num_gt_boxes = len(gt_class_boxes)
         num_pred_boxes = len(pred_class_boxes)
